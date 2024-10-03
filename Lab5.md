@@ -1,6 +1,6 @@
 Lab5
 ================
-Your Name
+Mursal Jahed
 2024-10-03
 
 # Load packages and dataset
@@ -11,19 +11,13 @@ library(ggplot2)
 library(Rmisc)
 ```
 
-    ## Warning: package 'Rmisc' was built under R version 4.3.3
-
     ## Loading required package: lattice
-
-    ## Warning: package 'lattice' was built under R version 4.3.3
 
     ## Loading required package: plyr
 
 ``` r
 library(rstatix)
 ```
-
-    ## Warning: package 'rstatix' was built under R version 4.3.3
 
     ## 
     ## Attaching package: 'rstatix'
@@ -42,12 +36,18 @@ library(emmeans)
 
     ## Warning: package 'emmeans' was built under R version 4.3.3
 
+    ## Welcome to emmeans.
+    ## Caution: You lose important information if you filter this package's results.
+    ## See '? untidy'
+
 ``` r
 library(bruceR)
 ```
 
+    ## Warning: package 'bruceR' was built under R version 4.3.3
+
     ## 
-    ## bruceR (v2023.9)
+    ## bruceR (v2024.6)
     ## Broadly Useful Convenient and Efficient R functions
     ## 
     ## Packages also loaded:
@@ -72,17 +72,11 @@ library(bruceR)
     ## https://psychbruce.github.io/bruceR
     ## 
     ## To use this package in publications, please cite:
-    ## Bao, H.-W.-S. (2023). bruceR: Broadly useful convenient and efficient R functions (Version 2023.9) [Computer software]. https://CRAN.R-project.org/package=bruceR
-
-    ## 
-    ## NEWS: A new version of bruceR (2024.6) is available (2024-06-13)!
-    ## 
-    ## ***** Please update *****
-    ## install.packages("bruceR", dep=TRUE)
+    ## Bao, H.-W.-S. (2024). bruceR: Broadly useful convenient and efficient R functions (Version 2024.6) [Computer software]. https://CRAN.R-project.org/package=bruceR
 
     ## 
     ## These packages are dependencies of `bruceR` but not installed:
-    ## - pacman, lmtest, vars, phia
+    ## - pacman, openxlsx, ggtext, lmtest, vars, phia, MuMIn, GGally
     ## 
     ## ***** Install all dependencies *****
     ## install.packages("bruceR", dep=TRUE)
@@ -91,7 +85,7 @@ library(bruceR)
 library(dplyr)
 library(labelled)
 
-lab5 <- read.csv("C:/Users/Colin/Documents/GitHub/Website/Lab5/lab5data.csv")
+lab5 <- read.csv("/Users/mursal_j/Documents/GitHub/Lab5/lab5data.csv")
 ```
 
 # Recode Variables
@@ -162,9 +156,8 @@ lab5 <- lab5 %>%
 
 # Note that for this lab you will assume assumptions are met, but for your own dataset, you should always check assumptions first
 
-# How to conduct planned contrasts?
-
-## Step 1: Recode 2x2 into 1x4
+\#For the data analysis project, check for assumptions!! \# How to
+conduct planned contrasts? \## Step 1: Recode 2x2 into 1x4
 
 ``` r
 lab5$Group <- ifelse(lab5$Gender == "Women" & lab5$Greek == "Yes", "Greek Women", 
@@ -184,7 +177,7 @@ lab5$Group <- ifelse(lab5$Gender == "Women" & lab5$Greek == "Yes", "Greek Women"
 #3rd group is Non-Greek Women,
 #4th group is Non-Greek Men. 
 
-#So if you want to compare Greek Women vs. Greek Men you would write (1, 1, 0, 0)
+#So if you want to compare Greek Women vs. Greek Men you would write (-1, 1, 0, 0) | note to self: you want your overall result to come back out as 0 -> hence the -1 vs just 1 <-
 ```
 
 ## Step 3: Build the model and test it
@@ -206,11 +199,11 @@ emm
     ## Confidence level used: 0.95
 
 ``` r
-contrast(emm, list("Greek Women vs. Greek Men" = c(1, 1, 0, 0)))
+contrast(emm, list("Greek Women vs. Greek Men" = c(-1, 1, 0, 0)))
 ```
 
     ##  contrast                  estimate   SE df t.ratio p.value
-    ##  Greek Women vs. Greek Men     30.6 4.01 57   7.640  <.0001
+    ##  Greek Women vs. Greek Men      -17 4.01 57  -4.238  0.0001
 
 ``` r
 contrast(emm, list("Greek Main Effect" = c(1, 1, -1, -1)))
@@ -421,6 +414,170 @@ ggplot(plot2, aes(x = Group, y = Drinks, fill = Group)) +
 
 # Q1: You hypothesized that Greek Women have a lower GPA than non-Greek women. Conduct the correct analysis below and explain whether or not your hypothesis is supported.
 
+``` r
+#This would be a simple effect analysis : we are comparing two of our four total groups.
+#Planned contrast is: 1,0,-1,0 if we refer back to step
+model <- lm(GPA ~ Group, data = lab5)
+
+emm<- emmeans(model, "Group")
+
+emm
+```
+
+    ##  Group           emmean     SE df lower.CL upper.CL
+    ##  Greek Men         3.52 0.1180 58     3.29     3.76
+    ##  Greek Women       3.66 0.0537 58     3.56     3.77
+    ##  Non-Greek Men     3.67 0.1180 58     3.43     3.90
+    ##  Non-Greek Women   3.59 0.0631 58     3.46     3.72
+    ## 
+    ## Confidence level used: 0.95
+
+``` r
+contrast(emm, list("Greek Women vs. Non-Greek Women" = c(-1, 0, 1, 0)))
+```
+
+    ##  contrast                        estimate    SE df t.ratio p.value
+    ##  Greek Women vs. Non-Greek Women    0.145 0.167 58   0.869  0.3886
+
+``` r
+#Response: My hypothesis is not supported. Being greek does not affect drinking in women, there is no significant difference in drinking between greek and non-greek women.
+```
+
 # Q2: You hypothesized that on average women have a higher GPA than men. Conduct the correct analysis below and explain whether or not your hypothesis is supported.
 
+``` r
+#Here, we test the main effect of gender on GPA for all four groups. 
+mod<-MANOVA(lab5, dv = "GPA", between = c("Gender", "Greek")) 
+```
+
+    ## Warning: Missing values for 1 ID(s), which were removed before analysis:
+    ## 25
+    ## Below the first few rows (in wide format) of the removed cases with missing data.
+    ##      bruceR.ID Gender Greek  .
+    ## # 25        25  Women   Yes NA
+
+    ## 
+    ## ====== ANOVA (Between-Subjects Design) ======
+    ## 
+    ## Descriptives:
+    ## ──────────────────────────────────
+    ##  "Gender" "Greek"  Mean    S.D.  n
+    ## ──────────────────────────────────
+    ##     Men       No  3.668 (0.345)  6
+    ##     Men       Yes 3.523 (0.210)  6
+    ##     Women     No  3.591 (0.345) 21
+    ##     Women     Yes 3.663 (0.243) 29
+    ## ──────────────────────────────────
+    ## Total sample size: N = 63
+    ## 
+    ## ANOVA Table:
+    ## Dependent variable(s):      GPA
+    ## Between-subjects factor(s): Gender, Greek
+    ## Within-subjects factor(s):  –
+    ## Covariate(s):               –
+    ## ────────────────────────────────────────────────────────────────────────────
+    ##                    MS   MSE df1 df2     F     p     η²p [90% CI of η²p]  η²G
+    ## ────────────────────────────────────────────────────────────────────────────
+    ## Gender          0.009 0.084   1  58 0.112  .739       .002 [.000, .056] .002
+    ## Greek           0.013 0.084   1  58 0.152  .698       .003 [.000, .061] .003
+    ## Gender * Greek  0.114 0.084   1  58 1.360  .248       .023 [.000, .120] .023
+    ## ────────────────────────────────────────────────────────────────────────────
+    ## MSE = mean square error (the residual variance of the linear model)
+    ## η²p = partial eta-squared = SS / (SS + SSE) = F * df1 / (F * df1 + df2)
+    ## ω²p = partial omega-squared = (F - 1) * df1 / (F * df1 + df2 + 1)
+    ## η²G = generalized eta-squared (see Olejnik & Algina, 2003)
+    ## Cohen’s f² = η²p / (1 - η²p)
+    ## 
+    ## Levene’s Test for Homogeneity of Variance:
+    ## ─────────────────────────────────────
+    ##          Levene’s F df1 df2     p    
+    ## ─────────────────────────────────────
+    ## DV: GPA       1.127   3  58  .346    
+    ## ─────────────────────────────────────
+
+``` r
+EMMEANS(mod, effect = "Gender", by = "Greek", p.adjust = "none")
+```
+
+    ## ------ EMMEANS (effect = "Gender") ------
+    ## 
+    ## Joint Tests of "Gender":
+    ## ───────────────────────────────────────────────────────────
+    ##  Effect "Greek" df1 df2     F     p     η²p [90% CI of η²p]
+    ## ───────────────────────────────────────────────────────────
+    ##  Gender     No    1  58 0.335  .565       .006 [.000, .077]
+    ##  Gender     Yes   1  58 1.162  .285       .020 [.000, .114]
+    ## ───────────────────────────────────────────────────────────
+    ## Note. Simple effects of repeated measures with 3 or more levels
+    ## are different from the results obtained with SPSS MANOVA syntax.
+    ## 
+    ## Estimated Marginal Means of "Gender":
+    ## ───────────────────────────────────────────────
+    ##  "Gender" "Greek" Mean [95% CI of Mean]    S.E.
+    ## ───────────────────────────────────────────────
+    ##     Men       No   3.668 [3.432, 3.905] (0.118)
+    ##     Women     No   3.591 [3.465, 3.717] (0.063)
+    ##     Men       Yes  3.523 [3.287, 3.760] (0.118)
+    ##     Women     Yes  3.663 [3.556, 3.771] (0.054)
+    ## ───────────────────────────────────────────────
+    ## 
+    ## Pairwise Comparisons of "Gender":
+    ## ─────────────────────────────────────────────────────────────────────────────────
+    ##     Contrast "Greek" Estimate    S.E. df      t     p     Cohen’s d [95% CI of d]
+    ## ─────────────────────────────────────────────────────────────────────────────────
+    ##  Women - Men     No    -0.077 (0.134) 58 -0.579  .565      -0.268 [-1.195, 0.659]
+    ##  Women - Men     Yes    0.140 (0.130) 58  1.078  .285       0.484 [-0.414, 1.381]
+    ## ─────────────────────────────────────────────────────────────────────────────────
+    ## Pooled SD for computing Cohen’s d: 0.289
+    ## 
+    ## Disclaimer:
+    ## By default, pooled SD is Root Mean Square Error (RMSE).
+    ## There is much disagreement on how to compute Cohen’s d.
+    ## You are completely responsible for setting `sd.pooled`.
+    ## You might also use `effectsize::t_to_d()` to compute d.
+
+``` r
+#Note to self: scroll up inside the graph!
+#Response: My hypothesis is not supported. The GPA of the average women does not significantly differ from the GPA of the average man. Gender's influence on GPA also does not change based on whether or individuals are greek. 
+```
+
 # Q3: Create a bar graph to compare GPA by gender and greek (either graph works)
+
+``` r
+lab5_clean <- lab5 %>%
+  drop_na(GPA)
+
+plot<-summarySE(lab5_clean, measurevar="GPA", groupvars=c("Gender", "Greek"))
+
+plot
+```
+
+    ##   Gender Greek  N      GPA        sd         se         ci
+    ## 1    Men    No  6 3.668333 0.3446979 0.14072234 0.36173830
+    ## 2    Men   Yes  6 3.523333 0.2100159 0.08573862 0.22039814
+    ## 3  Women    No 21 3.590857 0.3451948 0.07532767 0.15713077
+    ## 4  Women   Yes 29 3.663138 0.2427688 0.04508104 0.09234432
+
+``` r
+plot2<-summarySE(lab5_clean, measurevar="GPA", groupvars=c("Gender"))
+
+plot2
+```
+
+    ##   Gender  N      GPA        sd         se         ci
+    ## 1    Men 12 3.595833 0.2824715 0.08154250 0.17947383
+    ## 2  Women 50 3.632780 0.2891596 0.04089334 0.08217825
+
+``` r
+ggplot(plot, aes(x = Greek, y = GPA, fill = Greek)) +
+  geom_col() + facet_wrap(~ Gender) + theme_bruce()
+```
+
+![](Lab5_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+ggplot(plot2, aes(x = Gender, y = GPA, fill = Gender)) +
+  geom_col()  + theme_bruce() + theme(axis.text.x = element_text(angle = -10))
+```
+
+![](Lab5_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
